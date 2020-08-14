@@ -9,7 +9,7 @@
   <h3 align="center">Zlog SQL Query</h3>
 
   <p align="center">
-    A simple client-server app to query my ZNC logs stored in a MySQL database, not meant for others to download and use
+    A simple client-server app to query my ZNC logs stored in a MySQL database, not meant for others to download and use,
     but feel free to clone and adapt to your own uses
   </p>
 </p>
