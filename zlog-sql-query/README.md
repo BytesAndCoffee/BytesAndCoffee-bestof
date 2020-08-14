@@ -3,12 +3,12 @@
 -->
 
 <br />
-<p align="center">
+<p>
   <a href="https://github.com/BytesAndCoffee/zlog-sql-query"></a>
 
   <h3 align="center">Zlog SQL Query</h3>
 
-  <p align="center">
+  <p>
     A simple client-server app to query my ZNC logs stored in a MySQL database, not meant for others to download and use,
     but feel free to clone and adapt to your own uses
   </p>
