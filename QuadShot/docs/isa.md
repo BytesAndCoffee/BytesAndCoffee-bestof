@@ -126,6 +126,20 @@ Each instruction consists of an opcode and operands. The opcode specifies the op
   - Format: `IN [operand]`
   - Example: `IN AX`
 
+### Subroutine Definition
+
+- **.sub**: Defines the start of a subroutine.
+  - Format: `.sub([subroutine_name])`
+  - Example: `.sub(PRINT)`
+
+- **.endsub**: Defines the end of a subroutine.
+  - Format: `.endsub`
+  - Example: `.endsub`
+
+## Preprocessing
+
+Before the assembly code is passed to the assembler, a preprocessing step is performed. During this step, subroutine names are replaced with their corresponding addresses. This allows the `CALL` instruction to use subroutine names, which are then replaced with the correct addresses during preprocessing.
+
 ## Examples
 
 ### Example 1: Addition
@@ -160,3 +174,60 @@ RET
 ```
 
 This example calls a subroutine that moves the value 1 into the AX register and then returns to the caller.
+
+### Example 4: Subroutine Definition and Call
+
+```
+.sub(PRINT):
+OUT AX
+RET
+.endsub
+
+MOV AX, 5
+CALL PRINT
+```
+
+This example defines a subroutine named `PRINT` that outputs the value in the AX register and then returns. The main program moves the value 5 into the AX register and calls the `PRINT` subroutine.
+
+## Subroutine Definition
+
+Subroutines are defined using the `.sub` directive and terminated with the `.endsub` directive. The `.sub` directive takes the name of the subroutine as an argument. The subroutine code is placed between the `.sub` and `.endsub` directives.
+
+### Example
+
+```
+.sub(PRINT):
+OUT AX
+RET
+.endsub
+```
+
+In this example, a subroutine named `PRINT` is defined. The subroutine outputs the value in the AX register and then returns.
+
+## Calling Subroutines
+
+Subroutines are called using the `CALL` instruction. The `CALL` instruction takes the name of the subroutine as an argument. The `make_callable` function in `Drip.py` processes subroutine calls by replacing the `CALL` instruction with the subroutine's address.
+
+### Example
+
+```
+MOV AX, 5
+CALL PRINT
+```
+
+In this example, the value 5 is moved into the AX register, and then the `PRINT` subroutine is called.
+
+## Returning from Subroutines
+
+Subroutines return to the caller using the `RET` instruction. The `RET` instruction does not take any arguments.
+
+### Example
+
+```
+.sub(PRINT):
+OUT AX
+RET
+.endsub
+```
+
+In this example, the `PRINT` subroutine outputs the value in the AX register and then returns to the caller.
