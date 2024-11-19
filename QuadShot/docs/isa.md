@@ -68,6 +68,10 @@ Each instruction consists of an opcode and operands. The opcode specifies the op
   - Format: `POPG [operand]`
   - Example: `POPG AX`
 
+- **SWP**: Swaps the two halves of a register.
+  - Format: `SWP [operand]`
+  - Example: `SWP AX`
+
 ### Comparison Instructions
 
 - **CMP**: Compares two operands and sets the status register based on the result.
@@ -121,12 +125,6 @@ Each instruction consists of an opcode and operands. The opcode specifies the op
 - **IN**: Inputs a value into the operand.
   - Format: `IN [operand]`
   - Example: `IN AX`
-
-### Stack Instructions
-
-- **SWP**: Swaps the values of two operands.
-  - Format: `SWP [operand1], [operand2]`
-  - Example: `SWP AX, BX`
 
 ## Examples
 
