@@ -26,3 +26,44 @@ def test_reply_consume():
     assert m.user.username == 'janesmith'
     assert m.update_id == 42
     assert m.text == 'hello'
+
+
+def test_fetch_and_push(monkeypatch):
+    """Verify fetch updates offset and push formats messages."""
+
+    # Stub response for fetch with one message
+    message = {
+        'chat': {
+            'first_name': 'John', 'id': 1, 'last_name': 'Doe',
+            'type': 'private', 'username': 'johndoe'
+        },
+        'from': {
+            'first_name': 'Jane', 'id': 2, 'is_bot': False,
+            'language_code': 'en', 'last_name': 'Smith', 'username': 'janesmith'
+        },
+        'date': 123456,
+        'message_id': 7,
+        'text': 'hello'
+    }
+
+    class Resp:
+        ok = True
+        def json(self):
+            return {'ok': True, 'result': [{'update_id': 41, 'message': message}]}
+
+    monkeypatch.setattr(telepush.requests, 'get', lambda url: Resp())
+
+    tp = telepush.Telepush('TOKEN', '1', 0)
+    tp.add_chat('#chan', 'nick')
+
+    msgs = tp.fetch()
+    assert len(msgs) == 1
+    assert msgs[0].text == 'hello'
+    assert tp.offset == 42
+
+    sent = []
+    monkeypatch.setattr(tp, 'send', lambda m: sent.append(m))
+    tp.push('hi')
+
+    assert sent == ['#chan: <nick> hi']
+    assert tp.active.history[0].msg == 'hi'

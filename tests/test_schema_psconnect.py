@@ -44,3 +44,17 @@ def test_validate_schema_success():
 def test_validate_schema_failure_missing_column():
     row = {'id': 1}
     assert psconnect.validate_schema(row, 'logs') is False
+
+
+def test_print_schema(capsys):
+    schema_dict = {
+        'columns': [
+            {'id': ['int', 'false']},
+            {'name': ['varchar', 'true']}
+        ]
+    }
+    schema.print_schema(schema_dict, 'table')
+    captured = capsys.readouterr().out
+    assert '"table": {' in captured
+    assert '{"id": [int, False]}' in captured
+    assert '{"name": [str, True]}' in captured
