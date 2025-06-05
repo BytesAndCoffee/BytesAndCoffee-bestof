@@ -79,127 +79,154 @@ def tokenize(lines):
     for line in lines:
         op, args = None, None
         line = line.strip('\n')
+
         if '.data_' in line:
             mode = 1
             continue
-        elif '.exec_' in line:
+        if '.exec_' in line:
             mode = 2
             continue
-        elif '%' in line:
+        if '%' in line:
             continue
-        else:
-            if mode == 1:
+
+        match mode:
+            case 1:
                 d.append(data(line.strip('\t').strip(' ')))
                 continue
-            elif mode == 2:
+            case 2:
                 if line.strip('\t').strip(' ')[0] == ';':
                     continue
-                line = line.split(';')[0].strip('\t').split('|')
-                if ':' in line[0] and line[0] != '.':
-                    yield line[0].strip('\t').strip(' '), []
-                    continue
-                elif 'END' in line[0]:
-                    yield 'END', []
-                    continue
-                elif line[0][0] == '.':
-                    yield line[0].strip('\t').strip(' '), []
-                    continue
-                line = line[0].split()
-                op, args = line[0], line[1].split(',')
+                token = line.split(';')[0].strip('\t').split('|')[0]
+                match token:
+                    case t if ':' in t and t != '.':
+                        yield t.strip('\t').strip(' '), []
+                        continue
+                    case t if 'END' in t:
+                        yield 'END', []
+                        continue
+                    case t if t.startswith('.'):
+                        yield t.strip('\t').strip(' '), []
+                        continue
+                    case _:
+                        op, args = token.split()[0], token.split()[1].split(',')
+            case _:
+                pass
+
         yield op, args
 
 
 def parse(lines):
-    is_mem = lambda arg: True if arg[0] == '[' and arg[-1] == ']' else False
+    is_mem = lambda arg: arg[0] == '[' and arg[-1] == ']'
     for line in lines:
         op, args = line
+
         if args:
-            if op == 'DB':
-                if len(args[0]) == 4:
-                    op, args = args, []
-                else:
-                    args = [tohex(ord(n)) for n in args[0][1:-1]]
-                    op, args = args[0], args[1:]
-            elif op == 'CMP':
-                if is_mem(args[1]):
-                    op = table[op][0]
-                    args[0] = registers[args[0]]
-                    args[1] = args[1][1:-1]
-                elif args[1] in registers:
-                    op = table[op][1]
-                    args = [registers[arg] for arg in args]
-                elif is_mem(args[0]):
-                    op = table[op][3]
-                    args[0] = registers[args[0][1:-1]]
-                else:
-                    op = table[op][2]
-                    args[0] = registers[args[0]]
-            elif op in table['arithmetic']:
-                if args[1] in registers:
-                    op = table['arithmetic'][op][0]
-                    args = [registers[arg] for arg in args]
-                else:
-                    op = table['arithmetic'][op][1]
-                    args[0] = registers[args[0]]
-            elif op in table['jumps']:
-                op = table['jumps'][op]
-            elif len(args) == 1 and op in table:
-                if op == 'OUT':
-                    if is_mem(args[0]):
-                        op = table[op][2]
+            match op:
+                case 'DB':
+                    if len(args[0]) == 4:
+                        op, args = args, []
+                    else:
+                        args = [tohex(ord(n)) for n in args[0][1:-1]]
+                        op, args = args[0], args[1:]
+
+                case 'CMP':
+                    if is_mem(args[1]):
+                        op = table[op][0]
+                        args[0] = registers[args[0]]
+                        args[1] = args[1][1:-1]
+                    elif args[1] in registers:
+                        op = table[op][1]
+                        args = [registers[a] for a in args]
+                    elif is_mem(args[0]):
+                        op = table[op][3]
                         args[0] = registers[args[0][1:-1]]
+                    else:
+                        op = table[op][2]
+                        args[0] = registers[args[0]]
+
+                case cmd if cmd in table['arithmetic']:
+                    if args[1] in registers:
+                        op = table['arithmetic'][op][0]
+                        args = [registers[a] for a in args]
+                    else:
+                        op = table['arithmetic'][op][1]
+                        args[0] = registers[args[0]]
+
+                case cmd if cmd in table['jumps']:
+                    op = table['jumps'][op]
+
+                case 'MOV':
+                    op, args = mov(args)
+
+                case _ if len(args) == 1 and op in table:
+                    match op:
+                        case 'OUT':
+                            if is_mem(args[0]):
+                                op = table[op][2]
+                                args[0] = registers[args[0][1:-1]]
+                            elif args[0] in registers:
+                                op = table[op][1]
+                                args[0] = registers[args[0]]
+                            else:
+                                op = table[op][0]
+                        case 'IN':
+                            if args[0] in registers:
+                                op = table[op][0]
+                                args[0] = registers[args[0]]
+                            elif is_mem(args[0]):
+                                if args[0][1:-1] in registers:
+                                    op = table[op][1]
+                                    args[0] = registers[args[0][1:-1]]
+                                else:
+                                    op = table[op][2]
+                                    args[0] = args[0][1:-1]
+                        case 'CALL' | 'RET':
+                            op, args = table[op], args
+                        case _:
+                            if args[0] in registers:
+                                op = table[op]
+                                args = [registers[args[0]]]
+                            else:
+                                op = table[op]
+
+                case _:
+                    pass
+
+        else:
+            match op:
+                case 'OUT':
+                    if args[0][0] == '[' and args[0][-1] == ']':
+                        op = table[op][2]
+                        args[0] = args[0][1:-1]
                     elif args[0] in registers:
                         op = table[op][1]
                         args[0] = registers[args[0]]
                     else:
                         op = table[op][0]
-                elif op == 'IN':
-                    if args[0] in registers:
-                        op = table[op][0]
-                        args[0] = registers[args[0]]
-                    elif is_mem(args[0]):
-                        if args[0][1:-1] in registers:
-                            op = table[op][1]
-                            args[0] = registers[args[0][1:-1]]
-                        else:
-                            op = table[op][2]
-                            args[0] = args[0][1:-1]
-                elif op in ['CALL', 'RET']:
-                    op, args = table[op], args
-                elif args[0] in registers:
-                    op = table[op]
-                    args = [registers[args[0]]]
-                else:
-                    op = table[op]
-            elif op == 'MOV':
-                op, args = mov(args)
-        elif op == 'OUT':
-            if args[0][0] == '[' and args[0][-1] == ']':
-                op = table[op][2]
-                args[0] = args[0][1:-1]
-            elif args[0] in registers:
-                op = table[op][1]
-                args[0] = registers[args[0]]
-            else:
-                op = table[op][0]
-        elif op == 'END':
-            op, args = '0000', []
+                case 'END':
+                    op, args = '0000', []
+                case _:
+                    pass
+
         yield op, args
 
 
 def mov(args):
-    if args[0] in registers:
-        if len(args[1]) == 4 and args[1][1:-1] in registers:
-            return '00D3', [registers[args[0]], registers[args[1][1:-1]]]
-        elif len(args[1]) == 6:
-            return '00D1', [registers[args[0]], args[1][1:-1]]
-        else:
-            return '00D0', [registers[args[0]], args[1]]
-    else:
-        if args[0][1:-1] in registers:
-            return '00D4', [registers[args[0][1:-1]], registers[args[1]]]
-        else:
-            return '00D2', [args[0][1:-1], registers[args[1]]]
+    match args[0] in registers:
+        case True:
+            match len(args[1]):
+                case 4 if args[1][1:-1] in registers:
+                    return '00D3', [registers[args[0]], registers[args[1][1:-1]]]
+                case 6:
+                    return '00D1', [registers[args[0]], args[1][1:-1]]
+                case _:
+                    return '00D0', [registers[args[0]], args[1]]
+        case False:
+            match args[0][1:-1] in registers:
+                case True:
+                    return '00D4', [registers[args[0][1:-1]], registers[args[1]]]
+                case False:
+                    return '00D2', [args[0][1:-1], registers[args[1]]]
 
 
 def flatten(foo):
