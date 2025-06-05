@@ -1,0 +1,41 @@
+.data_                  ;
+  string>sort="zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFBECDA9876543210"
+  literal>len=003E
+.exec_                  ;
+%print%
+  MOV   BL,0000         ;
+  MOV   CL,sort         ;
+  MOV   DL,0000         ;
+MAIN:                   ;
+  MOV   AL,len          ;
+  MOV   BL,[AL]         ;
+  CMP   DL,BL           ;
+  JZ    BYE             ; Exit if list is sorted
+  CMP   [CL],000A       ; Is the display pointer at the end of the list?
+  JZ    RESET           ; If yes, jump to reset label
+  MOV   AH,[CL]         ; Move value at display pointer to AL
+  INC   CL              ; Increment display pointer to get next value
+  MOV   AL,[CL]         ; Move value at display pointer to BL
+  CMP   AL,000A         ;
+  JZ    RESET           ;
+  CMP   AH,AL           ; Is AL greater than BL?
+  JNS   SWAP            ; If yes, jump to swap label
+CHECK:                  ;
+  INC   DL              ; Increment swap counter
+  JMP   MAIN            ; Jump back to main loop
+SWAP:                   ;
+  DEC   DL              ; Decrement swap counter
+  SWP   AX              ; Swap values in AH and AL
+  DEC   CL              ; Decrement display pointer
+  MOV   [CL],AH         ; Move AL to [CL]
+  INC   CL              ; Increment display pointer
+  MOV   [CL],AL         ; Move BL to [CL]
+  JMP   MAIN            ; Jump back to main loop
+RESET:                  ;
+  MOV   CL,sort         ; Reset display pointer to C0
+  JMP   MAIN            ; Jump back to main loop
+BYE:                    ;
+  MOV   CL,sort         ; Re-initialize display pointer
+  PUSHG CL              ;
+  CALL  PRINT           ;
+  END                   ; End program
