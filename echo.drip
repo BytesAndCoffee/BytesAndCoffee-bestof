@@ -12,8 +12,11 @@ MAIN:                   ;
   PUSHG CL              ;
   CALL  INPUT           ;
   POPG  BH              ;
+  POPG  AL              ; remove newline from stack
   MOV   CL,text         ;
   ADD   CL,BH           ;
+  MOV   [CL],AL         ; store newline at end
+  DEC   CL              ; point to last char index
 STORE:                  ;
   CMP   BH,0000         ;
   JZ    PRNT            ;
