@@ -23,6 +23,7 @@ def test_ram_get_put():
     r.put('010E', '12')
     assert r.get('010E') == '0012'
 
+
 def test_swap():
     cpu = QuadShot.CPU()
     cpu.registers['0100'] = '12345678'
