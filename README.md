@@ -26,3 +26,13 @@ Utilities for parsing IRC logs and managing a processing queue.
 - **Getting Started**: Create a `.env` file as shown in [zlog_parsing/readme.md](zlog_parsing/readme.md), then run `python parse_logs.py` and `python zlog_queue.py`. Docker instructions are also provided.
 - **Documentation**: See the detailed guides in [zlog_parsing/docs](zlog_parsing/docs).
 
+
+## Testing
+
+A small pytest suite covers the standalone modules. After installing `pytest`, run
+
+```sh
+pytest
+```
+
+from the repository root.
